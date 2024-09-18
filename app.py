@@ -1,21 +1,27 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, request, redirect
 import requests
 import re
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    return render_template('youtube_form.html')
+@app.route('/youtube')
+def youtube_search():
+    url_param = request.args.get('id')
+    
+    if not url_param:
+        return "Channel ID is required", 400
 
-@app.route('/search', methods=['POST'])
-def search():
-    youtube_link = request.form['youtube_link']
-    url = 'https://www.azrotv.com/extras/youtube/'  # Replace this with the target URL
+    # Remove the .m3u8 if it's part of the ID
+    if url_param.endswith('.m3u8'):
+        url_param = url_param[:-5]  # Remove '.m3u8'
+
+    # Construct the YouTube live URL
+    youtube_link = f'https://www.youtube.com/channel/{url_param}/live'
+    target_url = 'https://www.azrotv.com/extras/youtube/'  # Replace this with the target URL
     payload = {'url': youtube_link}
     
     try:
-        response = requests.post(url, data=payload)
+        response = requests.post(target_url, data=payload)
         
         if response.status_code == 200:
             content = response.content.decode('utf-8-sig')  # Decoding with 'utf-8-sig' to remove BOM
